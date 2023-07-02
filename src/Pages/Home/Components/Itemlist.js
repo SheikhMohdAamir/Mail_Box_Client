@@ -2,9 +2,15 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import { useEffect } from 'react'
 import axios from 'axios'
 import { useState } from 'react'
+import { Link } from 'react-router-dom/cjs/react-router-dom.min';
+import { useDispatch } from 'react-redux';
+import { itemlistAction } from '../../ReduxStore/Slices/ItemlistSlice';
+import CloseButton from 'react-bootstrap/CloseButton';
 
 const Itemlist = () => {
     const [data, setData] = useState()
+
+    const dispatch = useDispatch()
 
     useEffect(()=>{
         return async() => {
@@ -25,9 +31,20 @@ const Itemlist = () => {
                 id:key,
                 email:data[key].email,
                 subject:data[key].subject,
-                text:data[key].text
+                text:data[key].text,
+                read:data[key].read
             })
         }
+    dispatch(itemlistAction.addItemlistDataToReducer(recievedData))
+
+    const deleteMailHandler = async(id) =>{
+        try{
+            await axios.delete(`https://mailboxclient-62a75-default-rtdb.firebaseio.com/sent/${id}.json`)
+        }
+        catch(error){
+            console.log('in Itemlist (deleteMailHandler)', error)
+        }
+    }
 
   return (
     <div>
@@ -35,7 +52,13 @@ const Itemlist = () => {
         <ListGroup>
             {recievedData.map(item=>{
                 return(
-                    <ListGroup.Item key={item.id}><b>▢ {item.email}</b>{`${item.subject} ${item.text}`}</ListGroup.Item>
+                        <ListGroup.Item key={item.id} >
+                            {item.read?'▢':'🔵'} 
+                            <Link to={`/home/${item.id}/${item.email}/${item.subject}/${item.text}`} >
+                            <b> {item.email} </b>
+                            </Link>
+                            <CloseButton style={{float:'right'}} onClick={()=>deleteMailHandler(item.id)}/>
+                        </ListGroup.Item>
                 )
             })}
         </ListGroup>
